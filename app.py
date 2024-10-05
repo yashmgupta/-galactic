@@ -1,6 +1,5 @@
 import math
 import numpy as np
-from random import randint, uniform
 import streamlit as st
 import plotly.graph_objects as go
 
@@ -8,7 +7,7 @@ import plotly.graph_objects as go
 SCALE = 350
 
 # Function to build spiral arms using NumPy
-def build_spiral_stars_np(b, r, rot_fac, fuz_fac, num_stars):
+def build_spiral_stars_np(b, r, rot_fac, fuz_fac, num_stars, height_scale):
     """Return NumPy array of (x,y,z) points for a logarithmic spiral."""
     i = np.arange(0, num_stars)
     theta = np.radians(i)
@@ -17,11 +16,12 @@ def build_spiral_stars_np(b, r, rot_fac, fuz_fac, num_stars):
     y = r * np.exp(b * theta) * np.sin(theta - np.pi * rot_fac)
     x += np.random.randint(-fuzz, fuzz, size=num_stars)
     y += np.random.randint(-fuzz, fuzz, size=num_stars)
-    z = np.random.uniform(-SCALE / (SCALE * 3), SCALE / (SCALE * 3), size=num_stars)
+    # Adjust z-values based on height_scale
+    z = np.random.uniform(-height_scale / 2, height_scale / 2, size=num_stars)
     return np.column_stack((x, y, z))
 
 # Function to generate a central bulge
-def spherical_coords(num_pts, radius):
+def spherical_coords(num_pts, radius, height_scale):
     """Return NumPy array of uniformly distributed points in a sphere."""
     phi = np.random.uniform(0, np.pi * 2, num_pts)
     costheta = np.random.uniform(-1, 1, num_pts)
@@ -32,8 +32,7 @@ def spherical_coords(num_pts, radius):
 
     x = r * np.sin(theta) * np.cos(phi)
     y = r * np.sin(theta) * np.sin(phi)
-    z = r * np.cos(theta) * 0.02  # Reduce z range
-
+    z = r * np.cos(theta) * (height_scale / radius)
     return np.column_stack((x, y, z))
 
 def main():
@@ -47,6 +46,8 @@ def main():
     spiral_openness = st.sidebar.slider('Spiral Openness', -0.5, 0.0, -0.3, 0.05)
     scale = st.sidebar.slider('Galactic Scale', 100, 500, 350, 50)
     rotation_speed = st.sidebar.slider('Rotation Speed', 10, 100, 50, 10)
+    # New slider for galaxy height
+    height_scale = st.sidebar.slider('Galactic Height', 1, 100, 15, 1)
 
     # Update global SCALE
     global SCALE
@@ -62,16 +63,19 @@ def main():
     leading_arm = []
     trailing_arm = []
     for i, arm_info in enumerate(arms_info):
-        arm = build_spiral_stars_np(b=spiral_openness,
-                                    r=arm_info[0],
-                                    rot_fac=arm_info[1],
-                                    fuz_fac=arm_info[2],
-                                    num_stars=num_stars)
+        arm = build_spiral_stars_np(
+            b=spiral_openness,
+            r=arm_info[0],
+            rot_fac=arm_info[1],
+            fuz_fac=arm_info[2],
+            num_stars=num_stars,
+            height_scale=height_scale
+        )
         if i % 2 != 0:
             leading_arm.extend(arm)
         else:
             trailing_arm.extend(arm)
-    core_stars = spherical_coords(num_core_stars, SCALE / 15)
+    core_stars = spherical_coords(num_core_stars, SCALE / 15, height_scale)
 
     # Prepare data for Plotly
     x_leading, y_leading, z_leading = np.array(leading_arm).T
