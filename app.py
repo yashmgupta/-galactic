@@ -3,6 +3,7 @@ import numpy as np
 from random import randint, uniform
 import streamlit as st
 import plotly.graph_objects as go
+import time
 
 # Set the radius of the galactic disc (scaling factor):
 SCALE = 350
@@ -61,6 +62,10 @@ def build_spiral_arms(b, arms_info):
 def main():
     st.set_page_config(page_title='3D Galaxy Simulation', page_icon=':milky_way:', layout='wide')
     st.title('Simulated Spiral Galaxy with Central Bulge')
+
+    # Initialize session state
+    if 'animate' not in st.session_state:
+        st.session_state['animate'] = False
 
     # Assign scale factor, rotation factor, and fuzz factor for spiral arms.
     arms_info = [(SCALE, 1, 1.5), (SCALE, 0.91, 1.5),
@@ -122,7 +127,10 @@ def main():
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
             zaxis=dict(visible=False),
-            bgcolor='black'
+            bgcolor='black',
+            camera=dict(
+                eye=dict(x=1.25, y=1.25, z=1.25)
+            )
         ),
         margin=dict(l=0, r=0, b=0, t=0),
         showlegend=False
@@ -130,8 +138,30 @@ def main():
 
     fig = go.Figure(data=data, layout=layout)
 
-    # Display the figure in Streamlit
-    st.plotly_chart(fig, use_container_width=True)
+    # Create a placeholder for the plot
+    plot_placeholder = st.empty()
+
+    # Create the animate button
+    if st.button('Animate Galaxy'):
+        st.session_state['animate'] = not st.session_state['animate']
+
+    if st.session_state['animate']:
+        # Animate the rotation
+        for angle in range(0, 360, 5):
+            camera = dict(
+                eye=dict(
+                    x=1.5 * np.cos(np.radians(angle)),
+                    y=1.5 * np.sin(np.radians(angle)),
+                    z=0.3  # Adjust z to control the elevation angle
+                )
+            )
+            fig.update_layout(scene_camera=camera)
+            plot_placeholder.plotly_chart(fig, use_container_width=True)
+            time.sleep(0.1)
+        st.session_state['animate'] = False
+    else:
+        # Display the static plot
+        plot_placeholder.plotly_chart(fig, use_container_width=True)
 
 if __name__ == '__main__':
     main()
