@@ -7,9 +7,9 @@ import plotly.graph_objects as go
 # Initialize global variables
 SCALE = 350
 
-# Function definitions (updated with NumPy where applicable)
-
+# Function to build spiral arms using NumPy
 def build_spiral_stars_np(b, r, rot_fac, fuz_fac, num_stars):
+    """Return NumPy array of (x,y,z) points for a logarithmic spiral."""
     i = np.arange(0, num_stars)
     theta = np.radians(i)
     fuzz = int(0.030 * abs(r)) * fuz_fac
@@ -18,6 +18,22 @@ def build_spiral_stars_np(b, r, rot_fac, fuz_fac, num_stars):
     x += np.random.randint(-fuzz, fuzz, size=num_stars)
     y += np.random.randint(-fuzz, fuzz, size=num_stars)
     z = np.random.uniform(-SCALE / (SCALE * 3), SCALE / (SCALE * 3), size=num_stars)
+    return np.column_stack((x, y, z))
+
+# Function to generate a central bulge
+def spherical_coords(num_pts, radius):
+    """Return NumPy array of uniformly distributed points in a sphere."""
+    phi = np.random.uniform(0, np.pi * 2, num_pts)
+    costheta = np.random.uniform(-1, 1, num_pts)
+    u = np.random.uniform(0, 1, num_pts)
+
+    theta = np.arccos(costheta)
+    r = radius * u ** (1/3)
+
+    x = r * np.sin(theta) * np.cos(phi)
+    y = r * np.sin(theta) * np.sin(phi)
+    z = r * np.cos(theta) * 0.02  # Reduce z range
+
     return np.column_stack((x, y, z))
 
 def main():
@@ -60,7 +76,7 @@ def main():
     # Prepare data for Plotly
     x_leading, y_leading, z_leading = np.array(leading_arm).T
     x_trailing, y_trailing, z_trailing = np.array(trailing_arm).T
-    x_core, y_core, z_core = np.array(core_stars).T
+    x_core, y_core, z_core = core_stars.T
 
     # Create color gradients
     leading_colors = np.random.uniform(0, 1, len(x_leading))
