@@ -47,7 +47,7 @@ def main():
     scale = st.sidebar.slider('Galactic Scale', 100, 500, 350, 50)
     rotation_speed = st.sidebar.slider('Rotation Speed', 10, 100, 50, 10)
     # New slider for galaxy height
-    height_scale = st.sidebar.slider('Galactic Height', 1, 100, 15, 1)
+    height_scale = st.sidebar.slider('Galactic Height', 1, 100, 100, 1)
 
     # Update global SCALE
     global SCALE
